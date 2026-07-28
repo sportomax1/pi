@@ -1,262 +1,83 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Master Sports Schedule</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Inter', sans-serif; background: #f8fafc; color: #0f172a; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
-        header { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(12px); border-bottom: 1px solid #e2e8f0; z-index: 60; flex-shrink: 0; }
-        #content-area { flex: 1; overflow: hidden; position: relative; background: #f1f5f9; display: flex; flex-direction: column; }
-        .table-view { overflow: auto; background: white; flex: 1; border: 1px solid #cbd5e1; -webkit-overflow-scrolling: touch; scroll-behavior: smooth; }
-        table { border-collapse: separate; border-spacing: 0; min-width: 100%; }
-        th, td { padding: 0; text-align: center; vertical-align: middle; background: #fff; border-right: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; box-sizing: border-box; }
-        thead th { position: sticky; top: 0; z-index: 30; background: #f8fafc; border-bottom: 2px solid #cbd5e1; }
-        tbody td:first-child, thead th:first-child { position: sticky; left: 0; z-index: 40; background: #f8fafc; border-right: 2px solid #cbd5e1; }
-        thead th:first-child { z-index: 50; background: #f1f5f9; }
-        
-        /* Win/Loss Highlights */
-        .win-bg { background-color: #bbf7d0 !important; }
-        .loss-bg { background-color: #fecaca !important; }
-        .today-highlight { background-color: #eff6ff !important; }
-        
-        .game-content { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; width: 100%; font-size: 11px; padding: 2px; }
-        .status-live { color: #ea580c; font-weight: 800; animation: pulse 1.5s infinite; font-size: 11px; }
-        .status-win { color: #166534; font-weight: 900; font-size: 12px; }
-        .status-loss { color: #991b1b; font-weight: 900; font-size: 12px; }
-        
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
-        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 100; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(4px); }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Master Sports Schedule</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: Inter, sans-serif; background:#f8fafc; color:#0f172a; height:100vh; overflow:hidden; display:flex; flex-direction:column; }
+    header { background:rgba(255,255,255,.95); backdrop-filter:blur(12px); border-bottom:1px solid #e2e8f0; z-index:60; flex-shrink:0; }
+    #content-area { flex:1; overflow:hidden; position:relative; background:#f1f5f9; display:flex; flex-direction:column; }
+    .table-view { overflow:auto; background:white; flex:1; border:1px solid #cbd5e1; -webkit-overflow-scrolling:touch; scroll-behavior:smooth; }
+    table { border-collapse:separate; border-spacing:0; min-width:100%; }
+    th,td { padding:0; text-align:center; vertical-align:middle; background:#fff; border-right:1px solid #e2e8f0; border-bottom:1px solid #e2e8f0; box-sizing:border-box; min-width:74px; }
+    thead th { position:sticky; top:0; z-index:30; background:#f8fafc; border-bottom:2px solid #cbd5e1; height:52px; }
+    tbody td:first-child, thead th:first-child { position:sticky; left:0; z-index:40; background:#f8fafc; border-right:2px solid #cbd5e1; min-width:58px; }
+    thead th:first-child { z-index:50; background:#f1f5f9; }
+    tbody td { height:66px; }
+    .win-bg { background-color:#bbf7d0 !important; }
+    .loss-bg { background-color:#fecaca !important; }
+    .today-highlight { background-color:#eff6ff !important; }
+    .game-content { display:flex; flex-direction:column; align-items:center; justify-content:center; width:100%; min-height:62px; font-size:11px; padding:3px 2px; }
+    .game-divider { width:80%; border-top:1px solid rgba(100,116,139,.25); margin:3px 0; }
+    .status-live { color:#ea580c; font-weight:800; animation:pulse 1.5s infinite; }
+    .status-win { color:#166534; font-weight:900; }
+    .status-loss { color:#991b1b; font-weight:900; }
+    .status-special { color:#7c3aed; font-weight:800; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+    .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:100; display:flex; justify-content:center; align-items:center; backdrop-filter:blur(4px); }
+  </style>
 </head>
 <body>
-
-    <header class="h-14 md:h-16 flex items-center justify-between px-3 md:px-6">
-        <div class="flex items-center gap-2">
-            <div class="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center text-white font-black text-lg shadow-sm">S</div>
-            <h1 class="text-sm md:text-lg font-bold tracking-tight text-slate-800 uppercase hidden sm:block">Master Schedule</h1>
-        </div>
-        <div class="flex gap-2">
-            <button onclick="toggleHideEmpty()" id="toggle-empty-btn" class="px-3 py-1.5 bg-white border border-slate-200 text-slate-700 text-[10px] font-black rounded-lg uppercase shadow-sm">
-                <span id="hide-label">Show All</span>
-            </button>
-            <button onclick="toggleFlip()" class="px-3 py-1.5 bg-white border border-slate-200 text-slate-700 text-xs font-bold rounded-lg shadow-sm">
-                AXIS
-            </button>
-            <button onclick="openModal()" class="px-3 py-1.5 bg-white border border-slate-200 text-slate-700 text-xs font-bold rounded-lg shadow-sm">
-                TEAMS
-            </button>
-            <button id="today-btn" onclick="scrollToToday()" class="px-4 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-bold shadow-sm">
-                TODAY
-            </button>
-        </div>
-    </header>
-
-    <div id="content-area">
-        <div id="loading" class="absolute inset-0 bg-white z-50 flex flex-col items-center justify-center">
-            <div class="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-3"></div>
-            <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Syncing Intelligence...</span>
-        </div>
-        <div id="table-container" class="table-view hidden">
-            <table id="main-table"><thead id="table-head"></thead><tbody id="table-body"></tbody></table>
-        </div>
+<header class="h-14 md:h-16 flex items-center justify-between px-3 md:px-6">
+  <div class="flex items-center gap-2">
+    <div class="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center text-white font-black text-lg shadow-sm">S</div>
+    <h1 class="text-sm md:text-lg font-bold tracking-tight text-slate-800 uppercase hidden sm:block">Master Schedule</h1>
+  </div>
+  <div class="flex gap-2">
+    <button onclick="toggleHideEmpty()" class="px-3 py-1.5 bg-white border border-slate-200 text-slate-700 text-[10px] font-black rounded-lg uppercase shadow-sm"><span id="hide-label">Show All</span></button>
+    <button onclick="toggleFlip()" class="px-3 py-1.5 bg-white border border-slate-200 text-slate-700 text-xs font-bold rounded-lg shadow-sm">AXIS</button>
+    <button onclick="openModal()" class="px-3 py-1.5 bg-white border border-slate-200 text-slate-700 text-xs font-bold rounded-lg shadow-sm">TEAMS</button>
+    <button onclick="scrollToToday()" class="px-4 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-bold shadow-sm">TODAY</button>
+  </div>
+</header>
+<div id="content-area">
+  <div id="status-bar" class="hidden px-3 py-2 text-xs font-semibold border-b"></div>
+  <div id="loading" class="absolute inset-0 bg-white z-50 flex flex-col items-center justify-center">
+    <div class="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-3"></div>
+    <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Loading schedules...</span>
+  </div>
+  <div id="table-container" class="table-view hidden"><table id="main-table"><thead id="table-head"></thead><tbody id="table-body"></tbody></table></div>
+</div>
+<div id="manage-modal" class="hidden modal-overlay">
+  <div class="bg-white rounded-xl shadow-2xl w-full max-w-md max-h-[85vh] flex flex-col m-4 overflow-hidden">
+    <div class="p-4 border-b flex justify-between items-center bg-slate-50"><h3 class="font-bold">Manage Teams</h3><button onclick="closeModal()" class="text-2xl">&times;</button></div>
+    <div class="p-4 border-b bg-white">
+      <div class="flex gap-2 mb-2"><input type="text" id="search-input" placeholder="Search team name..." class="flex-1 border rounded-lg px-3 py-2 text-sm" onkeydown="if(event.key==='Enter')searchTeams()"><button onclick="searchTeams()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold">Search</button></div>
+      <div id="search-results" class="max-h-40 overflow-y-auto space-y-1"></div>
     </div>
-
-    <div id="manage-modal" class="hidden modal-overlay">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md max-h-[85vh] flex flex-col m-4 overflow-hidden">
-            <div class="p-4 border-b flex justify-between items-center bg-slate-50">
-                <h3 class="font-bold">Manage Teams</h3>
-                <button onclick="closeModal()" class="text-2xl">&times;</button>
-            </div>
-            <div class="p-4 border-b bg-white">
-                <div class="flex gap-2 mb-2">
-                    <input type="text" id="search-input" placeholder="Search team name..." class="flex-1 border rounded-lg px-3 py-2 text-sm">
-                    <button onclick="searchTeams()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold">Search</button>
-                </div>
-                <div id="search-results" class="max-h-40 overflow-y-auto space-y-1"></div>
-            </div>
-            <div class="flex-1 overflow-y-auto p-4">
-                <ul id="team-list" class="space-y-2"></ul>
-            </div>
-            <div class="p-4 border-t flex justify-end gap-2">
-                <button onclick="closeModal()" class="px-4 py-2 text-slate-500 font-bold">Cancel</button>
-                <button onclick="saveAndReload()" class="px-6 py-2 bg-slate-900 text-white font-bold rounded-lg">Save</button>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        const LEAGUES = [
-            { s: 'basketball', l: 'nba' }, { s: 'basketball', l: 'wnba' },
-            { s: 'football', l: 'nfl' }, { s: 'football', l: 'college-football' },
-            { s: 'basketball', l: 'mens-college-basketball' }, { s: 'basketball', l: 'womens-college-basketball' },
-            { s: 'baseball', l: 'mlb' }, { s: 'baseball', l: 'college-baseball' },
-            { s: 'hockey', l: 'nhl' }
-        ];
-
-        let TEAMS = JSON.parse(localStorage.getItem('my_sports_teams')) || [
-            { id: "7", sport: "football", league: "nfl", name: "Broncos", logo: "https://a.espncdn.com/i/teamlogos/nfl/500/den.png" },
-            { id: "7", sport: "basketball", league: "nba", name: "Nuggets", logo: "https://a.espncdn.com/i/teamlogos/nba/500/den.png" }
-        ];
-
-        let SCHEDULES = {};
-        let IS_FLIPPED = false;
-        let SORTED_DATES = [];
-        let HIDE_EMPTY = JSON.parse(localStorage.getItem('hide_empty')) ?? true;
-
-        async function init() {
-            document.getElementById('loading').classList.remove('hidden');
-            const results = await Promise.all(TEAMS.map(fetchSchedule));
-            TEAMS.forEach((team, i) => { SCHEDULES[`${team.id}-${team.league}`] = results[i]; });
-            document.getElementById('loading').classList.add('hidden');
-            document.getElementById('table-container').classList.remove('hidden');
-            render();
-            setTimeout(scrollToToday, 500);
-        }
-
-        async function fetchSchedule(team) {
-            try {
-                const url = `https://site.api.espn.com/apis/site/v2/sports/${team.sport || 'basketball'}/${team.league}/teams/${team.id}/schedule`;
-                const res = await fetch(url);
-                const data = await res.json();
-                const map = {};
-                if (!data.events) return {};
-
-                data.events.forEach(ev => {
-                    const d = new Date(ev.date);
-                    const k = d.toLocaleDateString('sv');
-                    const comp = ev.competitions?.[0];
-                    if (!comp) return;
-
-                    const us = comp.competitors?.find(c => c.id == team.id);
-                    const them = comp.competitors?.find(c => c.id != team.id);
-                    if (!us || !them) return;
-
-                    const usScore = parseInt(us.score?.displayValue || us.score?.value || 0);
-                    const themScore = parseInt(them.score?.displayValue || them.score?.value || 0);
-                    
-                    let result = null;
-                    if (ev.status?.type?.state === 'post' || ev.status?.type?.completed === true || (usScore > 0 || themScore > 0)) {
-                        if (usScore > themScore) result = 'W';
-                        else if (usScore < themScore) result = 'L';
-                        else if (usScore === themScore && usScore > 0) result = 'T';
-                    }
-
-                    map[k] = {
-                        time: d.toLocaleTimeString([], {hour:'numeric', minute:'2-digit'}),
-                        oppLogo: them.team?.logos?.[0]?.href,
-                        isAway: them.homeAway === 'home',
-                        state: ev.status?.type?.state || 'pre',
-                        score: `${usScore}-${themScore}`,
-                        result: result, 
-                        network: comp.broadcasts?.[0]?.media?.shortName
-                    };
-                });
-                return map;
-            } catch (e) { return {}; }
-        }
-
-        function render() {
-            const gameDates = new Set();
-            Object.values(SCHEDULES).forEach(s => Object.keys(s).forEach(d => gameDates.add(d)));
-            const gameDatesArr = Array.from(gameDates).sort();
-
-            if (HIDE_EMPTY) SORTED_DATES = gameDatesArr;
-            else if (gameDatesArr.length > 0) {
-                const min = new Date(gameDatesArr[0] + 'T12:00:00'), max = new Date(gameDatesArr[gameDatesArr.length-1] + 'T12:00:00');
-                const range = [];
-                for (let d = new Date(min); d <= max; d.setDate(d.getDate()+1)) range.push(d.toLocaleDateString('sv'));
-                SORTED_DATES = range;
-            }
-
-            const today = new Date().toLocaleDateString('sv');
-            const thead = document.getElementById('table-head'), tbody = document.getElementById('table-body');
-            document.getElementById('main-table').className = IS_FLIPPED ? 'mode-flipped' : 'mode-standard';
-
-            if (!IS_FLIPPED) {
-                thead.innerHTML = `<tr><th>DATE</th>${TEAMS.map(t => `<th><img src="${t.logo}" class="w-8 h-8 mx-auto object-contain"></th>`).join('')}</tr>`;
-                tbody.innerHTML = SORTED_DATES.map(date => {
-                    const d = new Date(date + 'T12:00:00'), isToday = date === today;
-                    let html = `<tr id="row-${date}" class="${isToday ? 'today-highlight' : ''}">
-                        <td class="${isToday ? 'today-highlight-border' : ''} bg-slate-50">
-                            <div class="text-[8px] font-black text-blue-500">${d.toLocaleDateString('en-US',{weekday:'short'})}</div>
-                            <div class="text-xs font-bold">${d.getDate()}</div>
-                            <div class="text-[8px] text-slate-400 uppercase">${d.toLocaleDateString('en-US',{month:'short'})}</div>
-                        </td>`;
-                    TEAMS.forEach(t => html += renderCell(SCHEDULES[`${t.id}-${t.league}`]?.[date], date < today, isToday));
-                    return html + '</tr>';
-                }).join('');
-            } else {
-                thead.innerHTML = `<tr><th class="bg-slate-50">TEAM</th>${SORTED_DATES.map(date => {      
-                    const d = new Date(date + 'T12:00:00'), isToday = date === today;
-                    return `<th id="col-${date}" class="${isToday ? 'today-highlight' : ''}">
-                        <div class="text-[9px] font-black text-blue-500">${d.toLocaleDateString('en-US',{weekday:'short'})}</div>
-                        <div class="text-xs">${d.getDate()} ${d.toLocaleDateString('en-US',{month:'short'})}</div>
-                    </th>`;
-                }).join('')}</tr>`;
-                tbody.innerHTML = TEAMS.map(t => {
-                    let html = `<tr><td class="bg-slate-50"><img src="${t.logo}" class="w-8 h-8 mx-auto object-contain"></td>`;
-                    SORTED_DATES.forEach(date => html += renderCell(SCHEDULES[`${t.id}-${t.league}`]?.[date], date < today, date === today));
-                    return html + '</tr>';
-                }).join('');
-            }
-        }
-
-        function renderCell(g, isPast, isToday) {
-            const todayClass = isToday ? 'today-highlight' : '';
-            if (!g) return `<td class="${todayClass}"><span class="text-slate-100 text-[4px]">.</span></td>`;
-            
-            const showScore = g.state === 'in' || g.state === 'post' || isPast;
-            const statusClass = g.state === 'in' ? 'status-live' : (g.result === 'W' ? 'status-win' : (g.result === 'L' ? 'status-loss' : ''));
-            
-            let bgClass = todayClass;
-            if (g.result === 'W') bgClass += ' win-bg';
-            else if (g.result === 'L') bgClass += ' loss-bg';
-
-            return `<td class="${bgClass.trim()}">
-                <div class="game-content ${statusClass}">
-                    <div class="flex items-center gap-1 mb-0.5"><span class="opacity-50 text-[8px]">${g.isAway?'@':'vs'}</span><img src="${g.oppLogo}" class="w-6 h-6 object-contain"></div>
-                    <div class="font-black leading-tight">${showScore ? g.score : g.time}</div>
-                    ${g.network && !showScore ? `<div class="text-[8px] opacity-60">${g.network}</div>` : ''}
-                </div>
-            </td>`;
-        }
-
-        async function searchTeams() {
-            const q = document.getElementById('search-input').value.toLowerCase();
-            const resBox = document.getElementById('search-results');
-            if (!q) return;
-            resBox.innerHTML = '<div class="p-2 text-center text-xs font-bold text-slate-400 uppercase tracking-widest">Syncing API Data...</div>';
-            const hits = [];
-            const results = await Promise.all(LEAGUES.map(l => fetch(`https://site.api.espn.com/apis/site/v2/sports/${l.s}/${l.l}/teams${l.l.includes('college')?'?limit=1000':''}`).then(r=>r.json())));
-            results.forEach((d, i) => {
-                const group = d.sports?.[0]?.leagues?.[0]?.teams || [];
-                group.forEach(item => {
-                    if (item.team?.displayName?.toLowerCase().includes(q) || item.team?.name?.toLowerCase().includes(q)) {
-                        hits.push({ id: item.team.id, name: item.team.shortDisplayName, league: LEAGUES[i].l, sport: LEAGUES[i].s, logo: item.team.logos?.[0]?.href });
-                    }
-                });
-            });
-            resBox.innerHTML = hits.map(t => `<div class="flex justify-between items-center p-2 border-b hover:bg-slate-50 cursor-pointer" onclick='addTeam(${JSON.stringify(t)})'><div class="flex items-center gap-2"><img src="${t.logo}" class="w-5 h-5"><span>${t.name} <small class="text-slate-400 uppercase">(${t.league})</small></span></div><span class="text-blue-600 font-bold">+ ADD</span></div>`).join('');
-            if (hits.length === 0) resBox.innerHTML = '<div class="p-2 text-center text-xs text-slate-400">No teams found</div>';
-        }
-
-        function addTeam(t) { if(!TEAMS.find(x => x.id==t.id && x.league==t.league)) TEAMS.push(t); renderTeamList(); }
-        function removeTeam(i) { TEAMS.splice(i, 1); renderTeamList(); }
-        function renderTeamList() { document.getElementById('team-list').innerHTML = TEAMS.map((t, i) => `<li class="flex justify-between items-center bg-white p-2 border rounded shadow-sm"><div class="flex items-center gap-2"><img src="${t.logo}" class="w-6 h-6"><span>${t.name}</span></div><button onclick="removeTeam(${i})" class="text-red-500 text-xs font-bold">REMOVE</button></li>`).join(''); }
-        function openModal() { document.getElementById('manage-modal').classList.remove('hidden'); renderTeamList(); }
-        function closeModal() { document.getElementById('manage-modal').classList.add('hidden'); }        
-        function saveAndReload() { localStorage.setItem('my_sports_teams', JSON.stringify(TEAMS)); location.reload(); }
-        function toggleFlip() { IS_FLIPPED = !IS_FLIPPED; render(); scrollToToday(); }
-        function toggleHideEmpty() { HIDE_EMPTY = !HIDE_EMPTY; localStorage.setItem('hide_empty', HIDE_EMPTY); document.getElementById('hide-label').textContent = HIDE_EMPTY ? "Show All" : "Hide Empty"; render(); scrollToToday(); }
-        function scrollToToday() {
-            const today = new Date().toLocaleDateString('sv'), container = document.getElementById('table-container');
-            const target = document.getElementById(IS_FLIPPED ? `col-${today}` : `row-${today}`) || document.getElementById(IS_FLIPPED ? `col-${SORTED_DATES.find(d=>d>=today)}` : `row-${SORTED_DATES.find(d=>d>=today)}`);
-            if (target) IS_FLIPPED ? container.scrollLeft = target.offsetLeft - 80 : container.scrollTop = target.offsetTop - 80;
-        }
-        window.onload = init;
-    </script>
+    <div class="flex-1 overflow-y-auto p-4"><ul id="team-list" class="space-y-2"></ul></div>
+    <div class="p-4 border-t flex justify-end gap-2"><button onclick="closeModal()" class="px-4 py-2 text-slate-500 font-bold">Cancel</button><button onclick="saveAndReload()" class="px-6 py-2 bg-slate-900 text-white font-bold rounded-lg">Save</button></div>
+  </div>
+</div>
+<script>
+const LEAGUES=[{s:'basketball',l:'nba'},{s:'basketball',l:'wnba'},{s:'football',l:'nfl'},{s:'football',l:'college-football'},{s:'basketball',l:'mens-college-basketball'},{s:'basketball',l:'womens-college-basketball'},{s:'baseball',l:'mlb'},{s:'baseball',l:'college-baseball'},{s:'hockey',l:'nhl'}];
+let TEAMS=JSON.parse(localStorage.getItem('my_sports_teams'))||[{id:'7',sport:'football',league:'nfl',name:'Broncos',logo:'https://a.espncdn.com/i/teamlogos/nfl/500/den.png'},{id:'7',sport:'basketball',league:'nba',name:'Nuggets',logo:'https://a.espncdn.com/i/teamlogos/nba/500/den.png'}];
+let SCHEDULES={},IS_FLIPPED=false,SORTED_DATES=[],HIDE_EMPTY=JSON.parse(localStorage.getItem('hide_empty'))??true,LOAD_ERRORS=[];
+const teamKey=t=>`${t.id}-${t.league}`;
+const dateKey=d=>new Intl.DateTimeFormat('en-CA',{year:'numeric',month:'2-digit',day:'2-digit'}).format(d);
+function seasonCandidates(team){const n=new Date(),y=n.getFullYear(),m=n.getMonth()+1;if(['nba','nhl','mens-college-basketball','womens-college-basketball'].includes(team.league)){const e=m>=7?y+1:y;return[e-1,e,e+1]}return[y-1,y,y+1]}
+async function fetchJson(url,timeoutMs=12000){const c=new AbortController(),timer=setTimeout(()=>c.abort(),timeoutMs);try{const r=await fetch(url,{signal:c.signal,cache:'no-store'});if(!r.ok)throw new Error(`HTTP ${r.status}`);return await r.json()}finally{clearTimeout(timer)}}
+async function init(){document.getElementById('hide-label').textContent=HIDE_EMPTY?'Show All':'Hide Empty';const results=await Promise.allSettled(TEAMS.map(fetchSchedule));results.forEach((r,i)=>{const t=TEAMS[i];if(r.status==='fulfilled')SCHEDULES[teamKey(t)]=r.value;else{SCHEDULES[teamKey(t)]={};LOAD_ERRORS.push(`${t.name}: ${r.reason?.message||'schedule failed'}`)}});document.getElementById('loading').classList.add('hidden');document.getElementById('table-container').classList.remove('hidden');render();showStatus();setTimeout(scrollToToday,300)}
+async function fetchSchedule(team){const settled=await Promise.allSettled(seasonCandidates(team).map(season=>fetchJson(`https://site.api.espn.com/apis/site/v2/sports/${team.sport||'basketball'}/${team.league}/teams/${team.id}/schedule?season=${season}`)));const successful=settled.filter(x=>x.status==='fulfilled').map(x=>x.value);if(!successful.length)throw new Error('ESPN returned no schedule data');const map={},seen=new Set();successful.flatMap(d=>d.events||[]).forEach(event=>{if(!event?.id||seen.has(event.id))return;seen.add(event.id);const comp=event.competitions?.[0],us=comp?.competitors?.find(c=>String(c.id)===String(team.id)),them=comp?.competitors?.find(c=>String(c.id)!==String(team.id));if(!comp||!us||!them)return;const when=new Date(event.date);if(Number.isNaN(when.getTime()))return;const key=dateKey(when),state=event.status?.type?.state||'pre',completed=event.status?.type?.completed===true||state==='post',statusName=event.status?.type?.shortDetail||event.status?.type?.detail||event.status?.type?.description||'',usScore=Number(us.score?.displayValue??us.score?.value??0),themScore=Number(them.score?.displayValue??them.score?.value??0);let result=null;if(completed)result=usScore>themScore?'W':usScore<themScore?'L':'T';const game={id:event.id,time:when.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}),timestamp:when.getTime(),oppLogo:them.team?.logos?.[0]?.href||'',oppName:them.team?.abbreviation||them.team?.shortDisplayName||them.team?.displayName||'Opponent',isAway:us.homeAway==='away',state,completed,score:`${Number.isFinite(usScore)?usScore:0}-${Number.isFinite(themScore)?themScore:0}`,result,status:statusName,network:comp.broadcasts?.[0]?.names?.[0]||comp.broadcasts?.[0]?.media?.shortName||''};if(!map[key])map[key]=[];map[key].push(game)});Object.values(map).forEach(g=>g.sort((a,b)=>a.timestamp-b.timestamp));return map}
+function showStatus(){const bar=document.getElementById('status-bar'),total=Object.values(SCHEDULES).reduce((sum,s)=>sum+Object.values(s).reduce((n,g)=>n+g.length,0),0);if(LOAD_ERRORS.length){bar.className='px-3 py-2 text-xs font-semibold border-b bg-amber-50 text-amber-800 border-amber-200';bar.textContent=`Loaded ${total} games. Some teams failed: ${LOAD_ERRORS.join(' • ')}`;bar.classList.remove('hidden')}else if(!total){bar.className='px-3 py-2 text-xs font-semibold border-b bg-amber-50 text-amber-800 border-amber-200';bar.textContent='No games were returned. Open Teams and re-add a team if its saved ESPN ID is outdated.';bar.classList.remove('hidden')}}
+function render(){const dates=new Set();Object.values(SCHEDULES).forEach(s=>Object.keys(s).forEach(d=>dates.add(d)));const arr=[...dates].sort();if(HIDE_EMPTY)SORTED_DATES=arr;else if(arr.length){const min=new Date(`${arr[0]}T12:00:00`),max=new Date(`${arr.at(-1)}T12:00:00`),range=[];for(let d=new Date(min);d<=max;d.setDate(d.getDate()+1))range.push(dateKey(d));SORTED_DATES=range}else SORTED_DATES=[];const today=dateKey(new Date()),thead=document.getElementById('table-head'),tbody=document.getElementById('table-body');if(!SORTED_DATES.length){thead.innerHTML='<tr><th>DATE</th></tr>';tbody.innerHTML='<tr><td class="p-8 text-slate-500" colspan="99">No schedule data available.</td></tr>';return}if(!IS_FLIPPED){thead.innerHTML=`<tr><th>DATE</th>${TEAMS.map(t=>`<th title="${escapeHtml(t.name)}"><img src="${escapeAttr(t.logo)}" class="w-8 h-8 mx-auto object-contain" onerror="this.style.visibility='hidden'"></th>`).join('')}</tr>`;tbody.innerHTML=SORTED_DATES.map(date=>{const d=new Date(`${date}T12:00:00`),isToday=date===today;let html=`<tr id="row-${date}"><td class="${isToday?'today-highlight':''} bg-slate-50"><div class="text-[8px] font-black text-blue-500">${d.toLocaleDateString('en-US',{weekday:'short'})}</div><div class="text-xs font-bold">${d.getDate()}</div><div class="text-[8px] text-slate-400 uppercase">${d.toLocaleDateString('en-US',{month:'short'})}</div></td>`;TEAMS.forEach(t=>html+=renderCell(SCHEDULES[teamKey(t)]?.[date]||[],isToday));return html+'</tr>'}).join('')}else{thead.innerHTML=`<tr><th>TEAM</th>${SORTED_DATES.map(date=>{const d=new Date(`${date}T12:00:00`);return`<th id="col-${date}" class="${date===today?'today-highlight':''}"><div class="text-[9px] font-black text-blue-500">${d.toLocaleDateString('en-US',{weekday:'short'})}</div><div class="text-xs">${d.getDate()} ${d.toLocaleDateString('en-US',{month:'short'})}</div></th>`}).join('')}</tr>`;tbody.innerHTML=TEAMS.map(t=>{let html=`<tr><td class="bg-slate-50"><img src="${escapeAttr(t.logo)}" class="w-8 h-8 mx-auto object-contain" title="${escapeAttr(t.name)}"></td>`;SORTED_DATES.forEach(date=>html+=renderCell(SCHEDULES[teamKey(t)]?.[date]||[],date===today));return html+'</tr>'}).join('')}}
+function renderCell(games,isToday){if(!games.length)return`<td class="${isToday?'today-highlight':''}"><span class="text-slate-100 text-[4px]">.</span></td>`;const done=games.filter(g=>g.completed),allWins=done.length&&done.every(g=>g.result==='W'),allLosses=done.length&&done.every(g=>g.result==='L'),bg=allWins?'win-bg':allLosses?'loss-bg':isToday?'today-highlight':'';return`<td class="${bg}"><div class="game-content">${games.map((g,i)=>`${i?'<div class="game-divider"></div>':''}${renderGame(g)}`).join('')}</div></td>`}
+function renderGame(g){const special=/postpon|cancel|delay|suspend/i.test(g.status),cls=g.state==='in'?'status-live':g.result==='W'?'status-win':g.result==='L'?'status-loss':special?'status-special':'',primary=g.completed||g.state==='in'?g.score:special?g.status:g.time,secondary=g.state==='in'?g.status:(!g.completed&&!special?g.network:'');return`<div class="${cls}"><div class="flex items-center justify-center gap-1"><span class="opacity-50 text-[8px]">${g.isAway?'@':'vs'}</span>${g.oppLogo?`<img src="${escapeAttr(g.oppLogo)}" class="w-5 h-5 object-contain" title="${escapeAttr(g.oppName)}">`:`<span class="text-[9px]">${escapeHtml(g.oppName)}</span>`}</div><div class="font-black leading-tight">${escapeHtml(primary)}</div>${secondary?`<div class="text-[8px] opacity-70 max-w-[80px] truncate">${escapeHtml(secondary)}</div>`:''}</div>`}
+async function searchTeams(){const q=document.getElementById('search-input').value.trim().toLowerCase(),box=document.getElementById('search-results');if(!q)return;box.innerHTML='<div class="p-2 text-center text-xs font-bold text-slate-400 uppercase tracking-widest">Searching...</div>';const settled=await Promise.allSettled(LEAGUES.map(meta=>fetchJson(`https://site.api.espn.com/apis/site/v2/sports/${meta.s}/${meta.l}/teams${meta.l.includes('college')?'?limit=1000':'?limit=500'}`).then(data=>({meta,data}))));const hits=[];settled.filter(x=>x.status==='fulfilled').forEach(({value})=>{const group=value.data.sports?.[0]?.leagues?.[0]?.teams||[];group.forEach(item=>{const t=item.team;if(!t)return;const hay=`${t.displayName||''} ${t.shortDisplayName||''} ${t.name||''} ${t.abbreviation||''}`.toLowerCase();if(hay.includes(q))hits.push({id:String(t.id),name:t.shortDisplayName||t.displayName,league:value.meta.l,sport:value.meta.s,logo:t.logos?.[0]?.href||''})})});hits.sort((a,b)=>a.name.localeCompare(b.name));box.innerHTML=hits.slice(0,100).map(t=>`<button class="w-full flex justify-between items-center p-2 border-b hover:bg-slate-50 text-left" data-team="${encodeURIComponent(JSON.stringify(t))}" onclick="addTeamFromButton(this)"><span class="flex items-center gap-2"><img src="${escapeAttr(t.logo)}" class="w-5 h-5 object-contain"><span>${escapeHtml(t.name)} <small class="text-slate-400 uppercase">(${escapeHtml(t.league)})</small></span></span><span class="text-blue-600 font-bold">+ ADD</span></button>`).join('')||'<div class="p-2 text-center text-xs text-slate-400">No teams found</div>'}
+function addTeamFromButton(b){addTeam(JSON.parse(decodeURIComponent(b.dataset.team)))}function addTeam(t){if(!TEAMS.some(x=>String(x.id)===String(t.id)&&x.league===t.league))TEAMS.push(t);renderTeamList()}function removeTeam(i){TEAMS.splice(i,1);renderTeamList()}function renderTeamList(){document.getElementById('team-list').innerHTML=TEAMS.map((t,i)=>`<li class="flex justify-between items-center bg-white p-2 border rounded shadow-sm"><div class="flex items-center gap-2"><img src="${escapeAttr(t.logo)}" class="w-6 h-6 object-contain"><span>${escapeHtml(t.name)} <small class="text-slate-400 uppercase">${escapeHtml(t.league)}</small></span></div><button onclick="removeTeam(${i})" class="text-red-500 text-xs font-bold">REMOVE</button></li>`).join('')}function openModal(){document.getElementById('manage-modal').classList.remove('hidden');renderTeamList()}function closeModal(){document.getElementById('manage-modal').classList.add('hidden')}function saveAndReload(){localStorage.setItem('my_sports_teams',JSON.stringify(TEAMS));location.reload()}function toggleFlip(){IS_FLIPPED=!IS_FLIPPED;render();setTimeout(scrollToToday,0)}function toggleHideEmpty(){HIDE_EMPTY=!HIDE_EMPTY;localStorage.setItem('hide_empty',JSON.stringify(HIDE_EMPTY));document.getElementById('hide-label').textContent=HIDE_EMPTY?'Show All':'Hide Empty';render();setTimeout(scrollToToday,0)}function scrollToToday(){const today=dateKey(new Date()),c=document.getElementById('table-container'),fallback=SORTED_DATES.find(d=>d>=today)||SORTED_DATES.at(-1),target=document.getElementById(IS_FLIPPED?`col-${today}`:`row-${today}`)||document.getElementById(IS_FLIPPED?`col-${fallback}`:`row-${fallback}`);if(target){if(IS_FLIPPED)c.scrollLeft=Math.max(0,target.offsetLeft-80);else c.scrollTop=Math.max(0,target.offsetTop-80)}}function escapeHtml(v=''){return String(v).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}function escapeAttr(v=''){return escapeHtml(v)}window.addEventListener('load',init);
+</script>
 </body>
 </html>
